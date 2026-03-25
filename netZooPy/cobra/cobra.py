@@ -68,7 +68,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
         model = LinearRegression(positive=True).fit(X, np.diag(d) )
         psi = np.transpose(model.coef_)
     elif cobra=='nnlasso':
-        model == Lasso(alpha=alpha, positive=True).fit(X, np.diag(d) )
+        model = Lasso(alpha=alpha, positive=True).fit(X, np.diag(d) )
         psi = np.transpose(model.coef_)
     elif cobra=='deprecated':
         gtq = np.matmul(g.T, Q)
