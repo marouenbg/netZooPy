@@ -14,7 +14,8 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
     	Parameters
         -----------
             X : np.ndarray, pd.DataFrame
-                design matrix of size (n, q), n = number of samples, q = number of covariates
+                design matrix of size (n, q), n = number of samples, q = number of covariates. 
+                Please add an intercept column in X (first column made of ones).
             expression : np.ndarray, pd.DataFrame
                 gene expression as a matrix of size (g, n), g = number of genes
             cobra : string
@@ -65,10 +66,10 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
     d = c_eigenvalues[indices_nonzero][::-1]
 
     if cobra=='nnls':
-        model = LinearRegression(positive=True).fit(X, np.diag(d) )
+        model = LinearRegression(positive=True, fit_intercept=False).fit(X, np.diag(d) )
         psi = np.transpose(model.coef_)
     elif cobra=='nnlasso':
-        model = Lasso(alpha=alpha, positive=True).fit(X, np.diag(d) )
+        model = Lasso(alpha=alpha, positive=True, fit_intercept=False).fit(X, np.diag(d) )
         psi = np.transpose(model.coef_)
     elif cobra=='deprecated':
         gtq = np.matmul(g.T, Q)
