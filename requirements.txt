@@ -8,3 +8,4 @@ joblib
 statsmodels
 click
 scikit-learn
+torch
