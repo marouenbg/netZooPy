@@ -37,7 +37,8 @@ def test_cobra():
     pd.testing.assert_frame_equal(G, G_gt, rtol=1e-10, check_exact=False)
 
     q = psi.shape[0]
+    X_mean = np.mean(X.to_numpy(), axis=0)
     for i in range(q):
-        C = Q.to_numpy().dot(np.mean(X, axis=0)[i] * np.diag(psi.to_numpy()[i, :])).dot(Q.to_numpy().T)
-        C_gt = Q_gt.to_numpy().dot(np.mean(X, axis=0)[i] * np.diag(psi_gt.to_numpy()[i, :])).dot(Q_gt.to_numpy().T)
+        C = Q.to_numpy().dot(X_mean[i] * np.diag(psi.to_numpy()[i, :])).dot(Q.to_numpy().T)
+        C_gt = Q_gt.to_numpy().dot(X_mean[i] * np.diag(psi_gt.to_numpy()[i, :])).dot(Q_gt.to_numpy().T)
         pd.testing.assert_frame_equal(pd.DataFrame(C), pd.DataFrame(C_gt), rtol=1e-10, check_exact=False)
