@@ -22,8 +22,9 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
                 regression mode
                 nnls: Non-negative least square (default)
                 nnlasso: Non-negative LASSO
-                deprecated: MLE estimate
-            alpha :
+                MLE: Maximum likelihood estimation
+            alpha : np.float64
+                Regularization parameter for the LASSO model (default 0.1). Only used when cobra='nnlasso'.
     	Returns
         ---------
             psi : array
@@ -71,7 +72,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
     elif cobra=='nnlasso':
         model = Lasso(alpha=alpha, positive=True, fit_intercept=False).fit(X, np.diag(d) )
         psi = np.transpose(model.coef_)
-    elif cobra=='deprecated':
+    elif cobra=='MLE':
         gtq = np.matmul(g.T, Q)
         xtx_inv = np.linalg.pinv(
             np.dot(X.T, X)
