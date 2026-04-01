@@ -4,7 +4,7 @@ from scipy.linalg import eigh,pinv
 from sklearn.linear_model import LinearRegression, Lasso
 
 
-def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
+def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
     """
          COBRA decomposes a (partial) gene co-expression matrix as a
          linear combination of covariate-specific components.
@@ -25,6 +25,10 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
                 MLE: Maximum likelihood estimation
             alpha : np.float64
                 Regularization parameter for the LASSO model (default 0.1). Only used when cobra='nnlasso'.
+            mode : string
+                Type of matrix to decompose.
+                corr: Correlation matrix (default). Gene expressions are centered and normalized to unit norm.
+                cov: Covariance matrix. Gene expressions are centered and divided by sqrt(n-1).
     	Returns
         ---------
             psi : array
@@ -52,8 +56,13 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1):
     _, q = X.shape
 
     # Standardize Gene Expressions
-    g = expression - expression.mean(axis=1).reshape(-1, 1) 
-    g = g / np.linalg.norm(g, axis=1)[:, None]
+    g = expression - expression.mean(axis=1).reshape(-1, 1)
+    if mode == 'corr':
+        g = g / np.linalg.norm(g, axis=1)[:, None]
+    elif mode == 'cov':
+        g = g / np.sqrt(n - 1)
+    else:
+        raise ValueError("mode must be 'corr' or 'cov'.")
 
     # Co-expression Matrix
     c = np.dot(g, g.T)
