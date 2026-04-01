@@ -305,13 +305,13 @@ class condor_object:
             # Computes weighted biadjacency matrix.
             A = np.matrix(np.zeros((p, q)))
             for edge in self.net.iterrows():
-                A[gn[edge[1][1]], rg[edge[1][0]]] = edge[1][2]
+                A[gn[edge[1].iloc[1]], rg[edge[1].iloc[0]]] = edge[1].iloc[2]
 
             # Computes node degrees for the nodesets.
             ki = A.sum(1)
             dj = A.sum(0)
             # Computes sum of edges and bimodularity matrix.
-            m = float(sum(ki))
+            m = float(np.asarray(ki).sum())
             B = A - resolution*((ki @ dj) / m)
 
             # d = self.index_dict
