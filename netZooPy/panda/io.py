@@ -73,4 +73,38 @@ def load_expression(expression_file, with_header = False, start = 1, end = None)
     return(expression_data, expression_genes, expression_samples)
 
 
-#def load_ppi(ppi_file):
+def load_ppi(ppi_file):
+    """Read PPI data from a file path or DataFrame.
+
+    Parameters
+    ----------
+        ppi_file : str or pd.DataFrame or None
+            Path to file containing the PPI data or a pandas DataFrame.
+            The PPI can be symmetrical; if not, it will be transformed into
+            a symmetrical adjacency matrix.
+            If None, returns (None, []).
+
+    Returns
+    -------
+        ppi_data : pd.DataFrame or None
+            PPI data as a DataFrame.
+        ppi_tfs : list
+            Sorted list of unique TFs in the PPI.
+    """
+    if type(ppi_file) is str:
+        ppi_data = pd.read_csv(ppi_file, sep="\t", header=None)
+        ppi_tfs = sorted(
+            set(pd.concat([ppi_data[0], ppi_data[1]]))
+        )
+    elif type(ppi_file) is not str:
+        if ppi_file is not None:
+            if not isinstance(ppi_file, pd.DataFrame):
+                raise Exception("Please provide a pandas dataframe for PPI data.")
+            ppi_data = ppi_file
+            ppi_tfs = sorted(
+                set(pd.concat([ppi_data[0], ppi_data[1]]))
+            )
+        else:
+            ppi_data = None
+            ppi_tfs = []
+    return (ppi_data, ppi_tfs)
