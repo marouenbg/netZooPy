@@ -6,6 +6,7 @@ from .timer import Timer
 import numpy as np
 from netZooPy.cobra import cobra
 from netZooPy.panda import calculations as calc
+from netZooPy.panda.io import read_motif, read_expression, read_ppi
 import os
 
 class Panda(object):
@@ -326,82 +327,23 @@ class Panda(object):
         # Data loading
         # =====================================================================
         ### Loading Motif
-        if type(motif_file) is str:
-            # If motif_file is a filename
-            with Timer("Loading motif data ..."):
-                self.motif_data = pd.read_csv(motif_file, sep="\t", header=None)
-                self.motif_tfs = sorted(set(self.motif_data[0]))
-                self.motif_genes = sorted(set(self.motif_data[1]))
-                # self.num_tfs = len(self.unique_tfs)
-                # print('Unique TFs:', self.num_tfs)
-        elif type(motif_file) is not str:
-            # If motif_file is an object
-            if motif_file is None:
-                # Computation without motif
-                self.motif_data = None
-                self.motif_genes = []
-                self.motif_tfs = []
-            else:
-                # If motif_file is an object, it needs to be a dataframe
-                if not isinstance(motif_file, pd.DataFrame):
-                    raise Exception(
-                        "Please provide a pandas dataframe for motif data with column names as 'source', 'target', and 'weight'."
-                    )
-                if ("source" not in motif_file.columns) or (
-                    "target" not in motif_file.columns
-                ):
-                    print('renaming motif columns to "source", "target" and "weight" ')
-                    motif_file.columns = ["source", "target", "weight"]
-                self.motif_data = pd.DataFrame(motif_file.values)
-                self.motif_tfs = sorted(set(motif_file["source"]))
-                self.motif_genes = sorted(set(motif_file["target"]))
-            # self.num_tfs = len(self.unique_tfs)
-            # print('Unique TFs:', self.num_tfs)
+        with Timer("Loading motif data ..."):
+            self.motif_data, self.motif_tfs, self.motif_genes = read_motif(motif_file)
 
         ### Loading expression
-        if type(expression_file) is str:
-            # If we pass an expression file, check if we have a 'with header' flag and read it
-            with Timer("Loading expression data ..."):
-                if with_header:
-                    # Read data with header
-                    self.expression_data = pd.read_csv(
-                        expression_file, sep="\t", index_col=0
-                    )
-                else:
-                    self.expression_data = pd.read_csv(
-                        expression_file, sep="\t", header=None, index_col=0
-                    )
-                # assign expression data and samples/gene names
-                self.expression_data = self.expression_data.iloc[:, (start-1):end]
-                self.expression_genes = self.expression_data.index.tolist()
-                self.expression_samples = self.expression_data.columns.astype(str)
-                # self.num_genes = len(self.gene_names)
-                # print('Expression matrix:', self.expression_data.shape)
-        elif type(expression_file) is not str:
-            # Pass expression as a dataframe 
-            if expression_file is not None:
-                if not isinstance(expression_file, pd.DataFrame):
-                    raise Exception(
-                        "Please provide a pandas dataframe for expression data."
-                    )
-                self.expression_data = expression_file.iloc[:, (start-1):end]  # pd.read_csv(expression_file, sep='\t', header=None, index_col=0)
-                self.expression_genes = self.expression_data.index.tolist()
-                self.expression_samples = self.expression_data.columns.astype(str)
-                # self.num_genes = len(self.gene_names)
-                # print('Expression matrix:', self.expression_data.shape)
-            else:
-                # If no expression is passed
-                self.gene_names = self.motif_genes
-                self.expression_genes = self.motif_genes
-                self.num_genes = len(self.gene_names)
-                self.expression_data = (
-                    None  # pd.DataFrame(np.identity(self.num_genes, dtype=int))
-                )
-                print(
-                    # TODO: Marouen check here. Here we do not pass the identity matrix
-                    "No Expression data given: correlation matrix will be an identity matrix of size",
-                    len(self.motif_genes),
-                )
+        with Timer("Loading expression data ..."):
+            self.expression_data, self.expression_genes, self.expression_samples = \
+                read_expression(expression_file, start=start, end=end, with_header=with_header)
+
+        if self.expression_data is None:
+            # If no expression is passed
+            self.gene_names = self.motif_genes
+            self.expression_genes = self.motif_genes
+            self.num_genes = len(self.gene_names)
+            print(
+                "No Expression data given: correlation matrix will be an identity matrix of size",
+                len(self.motif_genes),
+            )
 
         if len(self.expression_genes) != len(np.unique(self.expression_genes)):
             print(
@@ -409,30 +351,17 @@ class Panda(object):
             )
 
         ### Loading the PPI
-        if type(ppi_file) is str:
-            with Timer("Loading PPI data ..."):
-                self.ppi_data = pd.read_csv(ppi_file, sep="\t", header=None)
-                self.ppi_tfs = sorted(
-                    set(pd.concat([self.ppi_data[0], self.ppi_data[1]]))
-                )
-                print("Number of PPIs:", self.ppi_data.shape[0])
-        elif type(ppi_file) is not str:
-            if ppi_file is not None:
-                if not isinstance(ppi_file, pd.DataFrame):
-                    raise Exception("Please provide a pandas dataframe for PPI data.")
-                self.ppi_data = ppi_file  # pd.read_csv(ppi_file, sep='\t', header=None)
-                self.ppi_tfs = sorted(
-                    set(pd.concat([self.ppi_data[0], self.ppi_data[1]]))
-                )
-                print("Number of PPIs:", self.ppi_data.shape[0])
-            else:
-                # TODO: marouen, here we do not have an identiy matrix
-                print(
-                    "No PPI data given: ppi matrix will be an identity matrix of size",
-                    len(self.motif_tfs),
-                )
-                self.ppi_data = None
-                self.ppi_tfs = self.motif_tfs
+        with Timer("Loading PPI data ..."):
+            self.ppi_data, self.ppi_tfs = read_ppi(ppi_file)
+
+        if self.ppi_data is not None:
+            print("Number of PPIs:", self.ppi_data.shape[0])
+        elif ppi_file is None:
+            print(
+                "No PPI data given: ppi matrix will be an identity matrix of size",
+                len(self.motif_tfs),
+            )
+            self.ppi_tfs = self.motif_tfs
 
 
         ### Data combination
