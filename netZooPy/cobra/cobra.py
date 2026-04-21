@@ -24,7 +24,8 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
                 nnlasso: Non-negative LASSO
                 MLE: Maximum likelihood estimation
             alpha : np.float64
-                Regularization parameter for the LASSO model (default 0.1). Only used when cobra='nnlasso'.
+                Regularization parameter for the LASSO model. Default is 0.1 and it can be tuned using cross-validation.
+                Only used when cobra='nnlasso'.
             mode : string
                 Type of matrix to decompose.
                 corr: Correlation matrix (default). Gene expressions are centered and normalized to unit norm.
@@ -47,7 +48,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
         raise ValueError("Unsupported type for 'X'. It should be of type: {np.ndarray, pd.DataFrame}")
     if isinstance(expression, pd.DataFrame):
         expression = expression.values
-    elif not isinstance(X, np.ndarray):
+    elif not isinstance(expression, np.ndarray):
         raise ValueError("Unsupported type for 'expression'. It should be of type: {np.ndarray, pd.DataFrame}")
     # Extract Shapes
     p, n = expression.shape
