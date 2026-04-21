@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 from scipy.linalg import eigh,pinv
+from sklearn.linear_model import LinearRegression, Lasso
 
 
-def cobra(X, expression):
+def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
     """
          COBRA decomposes a (partial) gene co-expression matrix as a
          linear combination of covariate-specific components.
@@ -13,9 +14,21 @@ def cobra(X, expression):
     	Parameters
         -----------
             X : np.ndarray, pd.DataFrame
-                design matrix of size (n, q), n = number of samples, q = number of covariates
+                design matrix of size (n, q), n = number of samples, q = number of covariates. 
+                Please add an intercept column in X (first column made of ones).
             expression : np.ndarray, pd.DataFrame
                 gene expression as a matrix of size (g, n), g = number of genes
+            cobra : string
+                regression mode
+                nnls: Non-negative least square (default)
+                nnlasso: Non-negative LASSO
+                MLE: Maximum likelihood estimation
+            alpha : np.float64
+                Regularization parameter for the LASSO model (default 0.1). Only used when cobra='nnlasso'.
+            mode : string
+                Type of matrix to decompose.
+                corr: Correlation matrix (default). Gene expressions are centered and normalized to unit norm.
+                cov: Covariance matrix. Gene expressions are centered and divided by sqrt(n-1).
     	Returns
         ---------
             psi : array
@@ -43,8 +56,13 @@ def cobra(X, expression):
     _, q = X.shape
 
     # Standardize Gene Expressions
-    g = expression - expression.mean(axis=1).reshape(-1, 1) 
-    g = g / np.linalg.norm(g, axis=1)[:, None]
+    g = expression - expression.mean(axis=1).reshape(-1, 1)
+    if mode == 'corr':
+        g = g / np.linalg.norm(g, axis=1)[:, None]
+    elif mode == 'cov':
+        g = g / np.sqrt(n - 1)
+    else:
+        raise ValueError("mode must be 'corr' or 'cov'.")
 
     # Co-expression Matrix
     c = np.dot(g, g.T)
@@ -55,26 +73,32 @@ def cobra(X, expression):
     Q = c_eigenvectors[:, indices_nonzero].T[::-1].T
 
     #
-    gtq = np.matmul(g.T, Q)
     d = c_eigenvalues[indices_nonzero][::-1]
 
-    #
-    xtx_inv = np.linalg.pinv(
-        np.dot(X.T, X)
-    )
-    xtx_inv_xt = np.dot(
-        xtx_inv, X.T
-    )
+    if cobra=='nnls':
+        model = LinearRegression(positive=True, fit_intercept=False).fit(X, np.diag(d) )
+        psi = np.transpose(model.coef_)
+    elif cobra=='nnlasso':
+        model = Lasso(alpha=alpha, positive=True, fit_intercept=False).fit(X, np.diag(d) )
+        psi = np.transpose(model.coef_)
+    elif cobra=='MLE':
+        gtq = np.matmul(g.T, Q)
+        xtx_inv = np.linalg.pinv(
+            np.dot(X.T, X)
+        )
+        xtx_inv_xt = np.dot(
+            xtx_inv, X.T
+        )
 
-    #
-    psi = np.zeros((q, n))
+        #
+        psi = np.zeros((q, n))
 
-    for i in range(q):
-        for h in range(n):
-            psi[i, h] = n * np.sum([
-                (
-                        xtx_inv_xt[i, k] * gtq[k, h] ** 2
-                ) for k in range(n)
-            ])
+        for i in range(q):
+            for h in range(n):
+                psi[i, h] = n * np.sum([
+                    (
+                            xtx_inv_xt[i, k] * gtq[k, h] ** 2
+                    ) for k in range(n)
+                ])
 
     return psi, Q, d, g
