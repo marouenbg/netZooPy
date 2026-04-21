@@ -357,14 +357,14 @@ class Panda(object):
 
         ### Loading the PPI
         # #TODO: move this to io
-        if type(ppi_file) is str:
+        if isinstance(ppi_file, (str, os.PathLike)):
             with Timer("Loading PPI data ..."):
                 self.ppi_data = pd.read_csv(ppi_file, sep="\t", header=None)
                 self.ppi_tfs = sorted(
                     set(pd.concat([self.ppi_data[0], self.ppi_data[1]]))
                 )
                 print("Number of PPIs:", self.ppi_data.shape[0])
-        elif type(ppi_file) is not str:
+        else:
             if ppi_file is not None:
                 if not isinstance(ppi_file, pd.DataFrame):
                     raise Exception("Please provide a pandas dataframe for PPI data.")
