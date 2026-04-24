@@ -1,18 +1,19 @@
 from __future__ import print_function
 
 import math
+import os
 import numpy as np
 import sys
 import pandas as pd
 
 
 def load_motif(motif_file):
-    if type(motif_file) is str:
+    if isinstance(motif_file, (str, os.PathLike)):
         # If motif_file is a filename
         motif_data = pd.read_csv(motif_file, sep="\t", header=None)
         motif_tfs = sorted(set(motif_data[0]))
         motif_genes = sorted(set(motif_data[1]))
-    elif type(motif_file) is not str:
+    else:
         # If motif_file is an object
         if motif_file is None:
             # Computation without motif
@@ -37,7 +38,7 @@ def load_motif(motif_file):
 
 
 def load_expression(expression_file, with_header = False, start = 1, end = None):
-    if type(expression_file) is str:
+    if isinstance(expression_file, (str, os.PathLike)):
         # If we pass an expression file, check if we have a 'with header' flag and read it
         
             if with_header:
@@ -54,7 +55,7 @@ def load_expression(expression_file, with_header = False, start = 1, end = None)
             expression_genes = expression_data.index.tolist()
             expression_samples = expression_data.columns.astype(str)
             
-    elif type(expression_file) is not str:
+    else:
         # Pass expression as a dataframe 
         if expression_file is not None:
             if not isinstance(expression_file, pd.DataFrame):
