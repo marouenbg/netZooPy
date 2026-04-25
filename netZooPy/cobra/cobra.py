@@ -77,8 +77,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
     d = c_eigenvalues[indices_nonzero][::-1]
 
     # Target matches the MLE formulation: regress n * (G^T Q)^2 on X.
-    # This makes nnls/nnlasso constrained (PSD) versions of the same MLE,
-    # rather than solving a different problem on diag(d).
+    # This makes nnls/nnlasso constrained (PSD) versions of the same MLE
     gtq = np.matmul(g.T, Q)
     target = n * (gtq ** 2)
 
