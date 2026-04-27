@@ -89,5 +89,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
         psi = np.transpose(model.coef_)
     elif cobra == 'MLE':
         psi = np.linalg.pinv(X.T @ X) @ X.T @ target
+    else:
+        raise ValueError("cobra must be 'nnls', 'nnlasso', or 'MLE'")
 
     return psi, Q, d, g
