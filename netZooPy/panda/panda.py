@@ -356,31 +356,17 @@ class Panda(object):
             )
 
         ### Loading the PPI
-        # #TODO: move this to io
-        if isinstance(ppi_file, (str, os.PathLike)):
-            with Timer("Loading PPI data ..."):
-                self.ppi_data = pd.read_csv(ppi_file, sep="\t", header=None)
-                self.ppi_tfs = sorted(
-                    set(pd.concat([self.ppi_data[0], self.ppi_data[1]]))
-                )
-                print("Number of PPIs:", self.ppi_data.shape[0])
-        else:
-            if ppi_file is not None:
-                if not isinstance(ppi_file, pd.DataFrame):
-                    raise Exception("Please provide a pandas dataframe for PPI data.")
-                self.ppi_data = ppi_file  # pd.read_csv(ppi_file, sep='\t', header=None)
-                self.ppi_tfs = sorted(
-                    set(pd.concat([self.ppi_data[0], self.ppi_data[1]]))
-                )
-                print("Number of PPIs:", self.ppi_data.shape[0])
-            else:
-                # TODO: marouen, here we do not have an identiy matrix
-                print(
-                    "No PPI data given: ppi matrix will be an identity matrix of size",
-                    len(self.motif_tfs),
-                )
-                self.ppi_data = None
-                self.ppi_tfs = self.motif_tfs
+        with Timer("Loading PPI data ..."):
+            self.ppi_data, self.ppi_tfs = io.load_ppi(ppi_file)
+
+        if self.ppi_data is not None:
+            print("Number of PPIs:", self.ppi_data.shape[0])
+        elif ppi_file is None:
+            print(
+                "No PPI data given: ppi matrix will be an identity matrix of size",
+                len(self.motif_tfs),
+            )
+            self.ppi_tfs = self.motif_tfs
 
 
         ### Data combination
