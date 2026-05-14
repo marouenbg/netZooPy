@@ -690,14 +690,14 @@ class Panda(object):
         subset_panda_results = subset_panda_results.rename(
             columns={"index": "tf_index"}
         )
-        subset_panda_results = subset_panda_results.drop(["name"], axis=1)
+        subset_panda_results = subset_panda_results.drop(["name"], 1)
         subset_panda_results = subset_panda_results.merge(
             unique_genes, how="inner", left_on="gene", right_on="name"
         )
         subset_panda_results = subset_panda_results.rename(
             columns={"index": "gene_index"}
         )
-        subset_panda_results = subset_panda_results.drop(["name"], axis=1)
+        subset_panda_results = subset_panda_results.drop(["name"], 1)
         links = subset_panda_results[["tf_index", "gene_index", "force"]]
         self.__create_plot(
             unique_genes=unique_genes, links=links, file=file, plot_bipart=plot_bipart
