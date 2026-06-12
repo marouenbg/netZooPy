@@ -24,7 +24,8 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
                 nnlasso: Non-negative LASSO
                 MLE: Maximum likelihood estimation
             alpha : np.float64
-                Regularization parameter for the LASSO model (default 0.1). Only used when cobra='nnlasso'.
+                Regularization parameter for the LASSO model. Default is 0.1 and it can be tuned using cross-validation.
+                Only used when cobra='nnlasso'.
             mode : string
                 Type of matrix to decompose.
                 corr: Correlation matrix (default). Gene expressions are centered and normalized to unit norm.
@@ -47,7 +48,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
         raise ValueError("Unsupported type for 'X'. It should be of type: {np.ndarray, pd.DataFrame}")
     if isinstance(expression, pd.DataFrame):
         expression = expression.values
-    elif not isinstance(X, np.ndarray):
+    elif not isinstance(expression, np.ndarray):
         raise ValueError("Unsupported type for 'expression'. It should be of type: {np.ndarray, pd.DataFrame}")
     # Extract Shapes
     p, n = expression.shape
@@ -75,30 +76,20 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
     #
     d = c_eigenvalues[indices_nonzero][::-1]
 
-    if cobra=='nnls':
-        model = LinearRegression(positive=True, fit_intercept=False).fit(X, np.diag(d) )
-        psi = np.transpose(model.coef_)
-    elif cobra=='nnlasso':
-        model = Lasso(alpha=alpha, positive=True, fit_intercept=False).fit(X, np.diag(d) )
-        psi = np.transpose(model.coef_)
-    elif cobra=='MLE':
-        gtq = np.matmul(g.T, Q)
-        xtx_inv = np.linalg.pinv(
-            np.dot(X.T, X)
-        )
-        xtx_inv_xt = np.dot(
-            xtx_inv, X.T
-        )
+    # Target matches the MLE formulation: regress n * (G^T Q)^2 on X.
+    # This makes nnls/nnlasso constrained (PSD) versions of the same MLE
+    gtq = np.matmul(g.T, Q)
+    target = n * (gtq ** 2)
 
-        #
-        psi = np.zeros((q, n))
-
-        for i in range(q):
-            for h in range(n):
-                psi[i, h] = n * np.sum([
-                    (
-                            xtx_inv_xt[i, k] * gtq[k, h] ** 2
-                    ) for k in range(n)
-                ])
+    if cobra == 'nnls':
+        model = LinearRegression(positive=True, fit_intercept=False).fit(X, target)
+        psi = np.transpose(model.coef_)
+    elif cobra == 'nnlasso':
+        model = Lasso(alpha=alpha, positive=True, fit_intercept=False).fit(X, target)
+        psi = np.transpose(model.coef_)
+    elif cobra == 'MLE':
+        psi = np.linalg.pinv(X.T @ X) @ X.T @ target
+    else:
+        raise ValueError("cobra must be 'nnls', 'nnlasso', or 'MLE'")
 
     return psi, Q, d, g
