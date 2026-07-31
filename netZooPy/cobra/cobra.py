@@ -22,7 +22,7 @@ def cobra(X, expression, cobra='nnls', alpha: np.float64=0.1, mode='corr'):
                 regression mode
                 nnls: Non-negative least square (default)
                 nnlasso: Non-negative LASSO
-                MLE: Maximum likelihood estimation
+                MLE: Maximum likelihood estimation (default in R)
             alpha : np.float64
                 Regularization parameter for the LASSO model. Default is 0.1 and it can be tuned using cross-validation.
                 Only used when cobra='nnlasso'.
