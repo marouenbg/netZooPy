@@ -80,6 +80,7 @@ Upon completion you can load netZooPy in your python code through
 
 ```python
 import netZooPy
+from netZooPy.cobra import cobra
 ```
 
 ## Conda installation
