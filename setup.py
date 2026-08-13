@@ -21,6 +21,7 @@ setup(name='netZooPy',
     'igraph',
     'joblib>=1.1.0',
     'statsmodels>=0.12.2',
+    'scikit-learn',
     'click',
     'tables',
     'torch'
