@@ -118,7 +118,7 @@ class Puma(object):
         with Timer("Loading miR data ..."):
             # If the mir_file is a string the mir list is read from file
             # otherwise the input list is used directly
-            if type(mir_file) is str:
+            if isinstance(mir_file, (str, os.PathLike)):
                 with open(mir_file, "r") as f:
                     miR = f.read().splitlines()
             elif isinstance(mir_file,list):

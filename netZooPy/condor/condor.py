@@ -311,7 +311,7 @@ class condor_object:
             ki = A.sum(1)
             dj = A.sum(0)
             # Computes sum of edges and bimodularity matrix.
-            m = float(sum(ki))
+            m = float(ki.sum())
             B = A - resolution*((ki @ dj) / m)
 
             # d = self.index_dict

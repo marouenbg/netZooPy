@@ -1,18 +1,19 @@
 from __future__ import print_function
 
 import math
+import os
 import numpy as np
 import sys
 import pandas as pd
 
 
 def load_motif(motif_file):
-    if type(motif_file) is str:
+    if isinstance(motif_file, (str, os.PathLike)):
         # If motif_file is a filename
         motif_data = pd.read_csv(motif_file, sep="\t", header=None)
         motif_tfs = sorted(set(motif_data[0]))
         motif_genes = sorted(set(motif_data[1]))
-    elif type(motif_file) is not str:
+    else:
         # If motif_file is an object
         if motif_file is None:
             # Computation without motif
@@ -37,7 +38,7 @@ def load_motif(motif_file):
 
 
 def load_expression(expression_file, with_header = False, start = 1, end = None):
-    if type(expression_file) is str:
+    if isinstance(expression_file, (str, os.PathLike)):
         # If we pass an expression file, check if we have a 'with header' flag and read it
         
             if with_header:
@@ -54,7 +55,7 @@ def load_expression(expression_file, with_header = False, start = 1, end = None)
             expression_genes = expression_data.index.tolist()
             expression_samples = expression_data.columns.astype(str)
             
-    elif type(expression_file) is not str:
+    else:
         # Pass expression as a dataframe 
         if expression_file is not None:
             if not isinstance(expression_file, pd.DataFrame):
@@ -73,4 +74,38 @@ def load_expression(expression_file, with_header = False, start = 1, end = None)
     return(expression_data, expression_genes, expression_samples)
 
 
-#def load_ppi(ppi_file):
+def load_ppi(ppi_file):
+    """Read PPI data from a file path or DataFrame.
+
+    Parameters
+    ----------
+        ppi_file : str or pd.DataFrame or None
+            Path to file containing the PPI data or a pandas DataFrame.
+            The PPI can be symmetrical; if not, it will be transformed into
+            a symmetrical adjacency matrix.
+            If None, returns (None, []).
+
+    Returns
+    -------
+        ppi_data : pd.DataFrame or None
+            PPI data as a DataFrame.
+        ppi_tfs : list
+            Sorted list of unique TFs in the PPI.
+    """
+    if type(ppi_file) is str:
+        ppi_data = pd.read_csv(ppi_file, sep="\t", header=None)
+        ppi_tfs = sorted(
+            set(pd.concat([ppi_data[0], ppi_data[1]]))
+        )
+    elif type(ppi_file) is not str:
+        if ppi_file is not None:
+            if not isinstance(ppi_file, pd.DataFrame):
+                raise Exception("Please provide a pandas dataframe for PPI data.")
+            ppi_data = ppi_file
+            ppi_tfs = sorted(
+                set(pd.concat([ppi_data[0], ppi_data[1]]))
+            )
+        else:
+            ppi_data = None
+            ppi_tfs = []
+    return (ppi_data, ppi_tfs)

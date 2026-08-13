@@ -23,7 +23,7 @@ def test_cobra():
     G_gt = pd.read_csv(G_gt_path, index_col=0)
 
     # Call COBRA
-    psi, Q, D, G = cobra.cobra(X, expression)
+    psi, Q, D, G = cobra.cobra(X, expression, cobra='MLE')
 
     # Cast output to pandas
     psi = pd.DataFrame(psi, index=psi_gt.index, columns=psi_gt.columns)
@@ -37,6 +37,7 @@ def test_cobra():
     pd.testing.assert_frame_equal(G, G_gt, rtol=1e-10, check_exact=False)
 
     q = psi.shape[0]
+    X_mean = np.mean(X.to_numpy(), axis=0)
     for i in range(q):
         C = Q.to_numpy().dot(np.mean(X, axis=0).iloc[i] * np.diag(psi.to_numpy()[i, :])).dot(Q.to_numpy().T)
         C_gt = Q_gt.to_numpy().dot(np.mean(X, axis=0).iloc[i] * np.diag(psi_gt.to_numpy()[i, :])).dot(Q_gt.to_numpy().T)
