@@ -10,7 +10,7 @@ never compare raw labels. They check
 * the structure of the output (node sets, one community per node),
 * that the partition matches the reference partition up to a relabelling
   (adjusted Rand index), and
-* that the final bipartite modularity is at least as good as the reference,
+* that the final bipartite modularity matches the reference,
 
 and that results are stable across seeds and reproducible for a fixed seed.
 """
@@ -88,7 +88,7 @@ def test_condor(tmp_path):
     co = _run(10, tar_out, reg_out)
 
     _assert_structure(co)
-    assert co.modularity >= REFERENCE_MODULARITY - MODULARITY_TOL
+    assert abs(co.modularity - REFERENCE_MODULARITY) <= MODULARITY_TOL
     _assert_partition_matches(co.tar_memb, GT_TAR, "tar")
     _assert_partition_matches(co.reg_memb, GT_REG, "reg")
 
@@ -106,8 +106,8 @@ def test_condor_reproducible_for_fixed_seed(tmp_path):
 def test_condor_stable_across_seeds(tmp_path):
     """The stochastic initialisation must not change the quality of the result."""
     runs = [_run(s, str(tmp_path / f"t{s}.txt"), str(tmp_path / f"r{s}.txt")) for s in (0, 42, 123)]
-    mods = [co.modularity for co in runs]
-    assert max(mods) - min(mods) <= MODULARITY_TOL
+    for co in runs:
+        assert abs(co.modularity - REFERENCE_MODULARITY) <= MODULARITY_TOL
     ref_tar, ref_reg = _labels(runs[0].tar_memb, "tar"), _labels(runs[0].reg_memb, "reg")
     for co in runs[1:]:
         assert adjusted_rand_score(ref_tar, _labels(co.tar_memb, "tar")) >= MIN_ARI
@@ -120,6 +120,8 @@ def test_condor_command_line(tmp_path):
 
     tar_out, reg_out = str(tmp_path / "tar2.txt"), str(tmp_path / "reg2.txt")
     _seed(10)
-    cmd.condor.callback(NETWORK, tar_output=tar_out, reg_output=reg_out)
+    # The CLI defaults to Louvain ("LCS"), whose result varies with the seed and the
+    # igraph version; Leiden reaches the reference partition for every seed.
+    cmd.condor.callback(NETWORK, initial_method="LDN", tar_output=tar_out, reg_output=reg_out)
     _assert_partition_matches(_read_memb(tar_out, "tar"), GT_TAR, "tar")
     _assert_partition_matches(_read_memb(reg_out, "reg"), GT_REG, "reg")

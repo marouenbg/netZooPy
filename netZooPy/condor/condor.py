@@ -11,7 +11,9 @@ def _leiden(graph, weights, resolution):
         return Graph.community_leiden(
             graph, objective_function="modularity", resolution=resolution, weights=weights
         )
-    except TypeError:
+    except TypeError as err:
+        if "resolution" not in str(err):
+            raise
         return Graph.community_leiden(
             graph, objective_function="modularity", resolution_parameter=resolution, weights=weights
         )
